@@ -42,7 +42,7 @@ function showPlan(c,selectedIndex){
   return '<div class="entry" '+(expanded?'style="border-color:#168d95;background:#f5fbfa"':'')+'><div class="entrytop"><button type="button" class="secondary" data-view-step="'+i+'" aria-expanded="'+expanded+'" style="text-align:left;flex:1;background:transparent;padding:6px"><strong>Séance '+x.number+' — '+escapeHtml(x.title)+'</strong> '+(expanded?'▾':'▸')+'</button><span class="pill">'+(i<data.next?'Passée':i===data.next?'À préparer':'À venir')+'</span></div>'+(expanded?'<p><strong>Objectif :</strong> '+escapeHtml(x.goal)+'</p><div class="metric"><strong>Travail : '+escapeHtml(practical.work)+'</strong><p>'+escapeHtml(practical.route)+'</p><p><strong>Récupération : </strong>'+escapeHtml(practical.rest)+'</p><p class="note">'+escapeHtml(practical.notice)+'</p></div><p><strong>Consignes :</strong> '+escapeHtml(x.task)+'</p><p><strong>Justification pédagogique :</strong> '+escapeHtml(x.why)+'</p><p><strong>À observer :</strong> '+escapeHtml(x.observe)+'</p><p><strong>Régulations :</strong> '+escapeHtml(x.regulate)+'</p><p><strong>Matériel :</strong> '+escapeHtml(x.tools)+'</p><div class="callout warn"><strong>Statut :</strong> scénario pédagogique proposé, non prescrit par les programmes. Ajuster volumes, durée et récupération au diagnostic et aux conditions réelles.</div><div class="actions"><button class="primary" data-use-index="'+i+'">Reprendre dans mon carnet de bord</button><button class="secondary" data-copy-objective="'+i+'">Copier l’objectif</button><button class="secondary" data-copy-index="'+i+'">Copier la fiche</button></div>':'')+'</div>'
  }).join("");
  el("generatedPlan").innerHTML='<div class="callout"><strong>Cadre institutionnel :</strong> '+escapeHtml(data.source.label)+' <a href="'+escapeHtml(data.source.url)+'" target="_blank" rel="noopener noreferrer">Consulter la source officielle ↗</a></div>'+list;
- el("generatedPlan").dataset.cycle=c.id;el("generatedPlan").dataset.index=current;
+ el("generatedPlan").dataset.cycle=c.id;el("generatedPlan").dataset.index=current;renderChoices(c);
 }
 el("generateHere").onclick=()=>{const c=cycle(el("seanceCycle").value);if(c)showPlan(c);else alert("Commence par créer un cycle.")};
 el("generatedPlan").onclick=e=>{
@@ -55,5 +55,15 @@ el("generatedPlan").onclick=e=>{
  else if(button.hasAttribute("data-copy-index"))copy(sheet);
  else{el("seanceTitle").value=step.title;el("objectif").value=step.goal;el("observation").value="Séance proposée : "+step.task+"\\nObservables : "+step.observe;el("seanceTitle").scrollIntoView({behavior:"smooth",block:"center"})}
 };
+
+
+function renderChoices(c){
+ const host=el("choices");if(!host)return;
+ const data=window.DemiFondEngine.sequence(c),options=[...new Map(data.steps.filter(x=>x.key!=="evaluation").map(x=>[x.key,x])).values()];
+ host.innerHTML=options.map(x=>'<div class="panel span4" style="box-shadow:none;background:#f7fafb"><strong>'+escapeHtml(x.title)+'</strong><p class="note">'+escapeHtml(x.goal)+'</p><button type="button" class="secondary" data-pick="'+escapeHtml(x.key)+'">Voir cette situation</button></div>').join("");
+ host.dataset.cycle=c.id;
+}
+el("choices").onclick=e=>{const b=e.target.closest("[data-pick]");if(!b)return;const c=cycle(el("choices").dataset.cycle);if(!c)return;const data=window.DemiFondEngine.sequence(c),idx=data.steps.findIndex(x=>x.key===b.dataset.pick);if(idx>=0){showPlan(c,idx);el("generatedPlan").scrollIntoView({behavior:"smooth",block:"start"})}};
+el("researchBtn").onclick=async()=>{const term=el("researchTerm").value.trim(),host=el("researchResults");if(term.length<3)return;host.textContent="Recherche en cours…";try{const r=await fetch("/api/research?q="+encodeURIComponent(term));const data=await r.json();if(!r.ok)throw Error(data.error||"Erreur");host.innerHTML='<p class="note">'+escapeHtml(data.warning)+'</p>'+(data.items.length?data.items.map(x=>'<div class="entry"><strong>'+escapeHtml(x.title)+'</strong><p class="note">'+escapeHtml(x.authors.join(", "))+' · '+escapeHtml(x.year||"Année inconnue")+' · '+escapeHtml(x.journal)+'</p><a href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer">Consulter la publication ↗</a></div>').join(""):'<div class="empty">Aucune référence trouvée.</div>')}catch(err){host.textContent="Recherche indisponible : "+err.message+". Le répertoire de situations reste consultable."}};
 
 render();
