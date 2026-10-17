@@ -52,9 +52,9 @@ el("generatedPlan").onclick=e=>{
  const button=e.target.closest("[data-use-index],[data-copy-index],[data-copy-objective]");if(!button)return;
  const index=Number(button.dataset.useIndex??button.dataset.copyIndex??button.dataset.copyObjective),data=window.DemiFondEngine.sequence(c),step=data.steps[index];if(!step)return;
  const practical=window.DemiFondEngine.practical(c,step);const sheet=step.title+"\\n\\nTravail : "+practical.work+"\\n"+practical.route+"\\nRécupération : "+practical.rest+"\\n\\nObjectif : "+step.goal+"\\n\\nJustification : "+step.why+"\\n\\nSituation : "+window.DemiFondEngine.describe(c,step)+"\\n\\nObservables : "+step.observe+"\\n\\nRégulations : "+step.regulate+"\\n\\nCadre institutionnel : "+data.source.label+" "+data.source.url+"\\n\\nNote : proposition didactique à adapter ; ce protocole n'est pas prescrit par les textes.";
- if(button.hasAttribute("data-copy-objective"))copy(step.goal);
+ if(button.hasAttribute("data-copy-objective"))copy(window.DemiFondPilot?.build(c,index)?.goal||step.goal);
  else if(button.hasAttribute("data-copy-index"))copy(sheet);
- else{el("seanceTitle").value=step.title;el("objectif").value=step.goal;el("observation").value="Séance proposée : "+step.task+"\\nObservables : "+step.observe;el("seanceTitle").scrollIntoView({behavior:"smooth",block:"center"})}
+ else{el("seanceTitle").value=step.title;el("objectif").value=window.DemiFondPilot?.build(c,index)?.goal||step.goal;el("observation").value="Séance proposée : "+step.task+"\\nObservables : "+step.observe;el("seanceTitle").scrollIntoView({behavior:"smooth",block:"center"})}
 };
 
 
